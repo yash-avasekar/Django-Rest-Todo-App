@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 from django.conf import settings
@@ -22,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-ukf9af5=i%jg#bz2p%u3@rq53a1el(e#zzhjk&srh@glmqw8yj"
+SECRET_KEY = os.environ.get("SECREY_KEY", "NA")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
