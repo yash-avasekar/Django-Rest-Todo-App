@@ -6,6 +6,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.authtoken.models import Token
 
 from .models import Todo, User
 from .serializers import TodoSerializer, UserSerializer
@@ -23,6 +24,13 @@ class CreateUserViewset(CreateAPIView):
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        seriailzer = self.get_serializer(data=request.data, many=False)
+        if seriailzer.is_valid():
+            seriailzer.save()
+            return Response("User Created Successfuly", status=status.HTTP_201_CREATED)
+        return Response(seriailzer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # User Viewsets
@@ -49,15 +57,18 @@ class UserViewsets(ModelViewSet):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            return Response(status=status.HTTP_200_OK)
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"Token": token.key}, status=status.HTTP_200_OK)
         return Response(
             "Invalid username or password.", status=status.HTTP_400_BAD_REQUEST
         )
 
-    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["get"])
     def logout(self, request):
-        logout(request)
-        return Response("Logged out.", status=status.HTTP_200_OK)
+        if request.user.is_authenticated:
+            Token.objects.filter(user=request.user).delete()
+            return Response("Logged out.", status=status.HTTP_200_OK)
+        return Response("No user is authenticated. Logout not performed.")
 
 
 # Todo Viewsets
